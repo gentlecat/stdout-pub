@@ -1,0 +1,94 @@
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  
+    <title>Phone # authentication done wrong - stdout - Roman Tsukanov</title>
+  
+
+  <link rel="stylesheet" href="/static/fonts/charter/web/stylesheet.css" />
+  <link rel="stylesheet" href="/static/fonts/inconsolata/web/stylesheet.css" />
+  <link rel="stylesheet" href="/static/styles/main.css" />
+  
+  <script defer data-domain="stdout.roman.zone" src="https://peak.roman.zone/js/script.js"></script>
+
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" />
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/bash.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/go.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/nginx.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body>
+
+  <header>
+    <h1>/home/<a href="https://roman.zone/">roman</a>/<a href="/">stdout</a></h1>
+  </header>
+
+  <div class="content">
+    
+<div id="article-content">
+  <h1 class="title">Phone # authentication done wrong</h1>
+  <div class="date">Sep 28, 2017</div>
+  <div class="text"><p>It&rsquo;s pretty typical for telecom providers to reuse abandoned phone numbers. It&rsquo;s also typical to use a phone number as an authentication method (usually combined with <em>just</em> an SMS or call verification). Notice the issue?</p>
+
+<p>One of the local car hire services<sup class="footnote-ref" id="fnref:maxim"><a href="#fn:maxim">1</a></sup> does exactly that. They ask for your phone number and then you get a message with the code to verify that the phone number is yours. <strong>After that&rsquo;s done it loads all the previous rides and favourite routes.</strong> This info is not necessarily yours though&hellip; It could be from another person who happened to use the same phone number with the same app before. That&rsquo;s what happened to me the first time I used that app.</p>
+
+<p>Imagine my surprise when I saw a list of rides that I&rsquo;ve never done, list of favourite routes that weren&rsquo;t created by me. Since all this info showed up after I attached a phone number to the app, my conclusion is that two are connected. Again, I just had to prove that the phone number is currently mine.</p>
+
+<div class="two-figures">
+    <figure>
+        <img src="/static/img/crazy-taxi/list.png" />
+        <figcaption>Rides list</figcaption>
+    </figure>
+    <figure>
+        <img src="/static/img/crazy-taxi/details.png" />
+        <figcaption>Details of a specific ride</figcaption>
+    </figure>
+    <figure>
+        <img src="/static/img/crazy-taxi/favorites.jpeg" />
+        <figcaption>Favorite routes</figcaption>
+    </figure>
+</div>
+
+<p>While for some people trip history and favourite routes (with custom labels) might not be the most private info, I imagine most wouldn&rsquo;t want to share this with strangers. Even the car hire service lists this information in their &ldquo;<a href="https://taximaxim.ru/term/policy-client/" rel="nofollow noreferrer noopener">confidentiality policy</a>&rdquo;.</p>
+
+<p>I&rsquo;m not quite sure what&rsquo;s a good way to handle this problem without having separate username and password combination. Perhaps resetting user data when a new phone is connected would be enough to make sure that people&rsquo;s private data stays private.</p>
+
+<p>Worth noting that there&rsquo;s also an option to attach a bank card to your account for easier payments. I don&rsquo;t know if this information is also stored on their servers. Wouldn&rsquo;t surprise me if it is. Fortunately, it didn&rsquo;t show up for me. Looks like the previous owner paid for rides in cash.</p>
+
+<hr />
+
+<p>I tried to report this issue to the company, but unfortunately, there&rsquo;s no contact email for security issues. I didn&rsquo;t get any response from the one that is listed on the <a href="https://taximaxim.ru/en/contacts/" rel="nofollow noreferrer noopener">contacts page</a>. 🤷🏽‍♂️</p>
+
+<div class="footnotes">
+
+<hr />
+
+<ol>
+<li id="fn:maxim"><a href="https://taximaxim.ru" rel="nofollow noreferrer noopener">https://taximaxim.ru</a> <a class="footnote-return" href="#fnref:maxim"><span aria-label='Return'>↩︎</span></a></li>
+</ol>
+
+</div>
+</div>
+</div>
+
+  </div>
+
+  <footer>
+    <hr />
+    Articles by <a rel="author" href="https://roman.zone/">Roman Tsukanov</a>,
+    licensed under the <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> license.
+    <strong><a type="application/rss+xml" href="/rss.xml">RSS feed</a></strong>.
+    <br /><em>Opinions expressed here are my own.</em>
+  </footer>
+
+</body>
+
+</html>
