@@ -1,0 +1,89 @@
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  
+    <title>Setting up `go get` redirect for your own packages - /home/roman/stdout</title>
+  
+
+  <link rel="stylesheet" href="/static/styles/main.css" />
+
+  <script src="/static/js/comments.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/comments.css" />
+
+  <script src="/static/js/code-highlight.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/code-highlight.css" />
+
+  <script src="https://peak.roman.zone/js/script.js" data-domain="stdout.roman.zone" defer></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>/home/<a href="https://roman.zone/">roman</a>/<a href="/">stdout</a></h1>
+  </header>
+
+  <div class="content">
+    
+<div id="article-content">
+  <h1 class="title">Setting up `go get` redirect for your own packages</h1>
+  <div class="date">Dec 17, 2016</div>
+  <div class="text"><p>I&rsquo;m a big fan of the way dependencies are implemented in <a href="https://golang.org/" rel="nofollow noreferrer noopener">Go</a>. You can &ldquo;import&rdquo; a Git repository and quickly get started. This is done by importing a package like this:</p>
+
+<pre><code class="language-go">import &quot;github.com/gentlecat/publisher&quot;
+</code></pre>
+
+<p>You&rsquo;d download all the packages you need with a <code>go get</code> command.</p>
+
+<p>There might be an issue if you decide to move to another Git hosting or change your GitHub username, for example. All the packages that depend on yours will stop getting updates or even won&rsquo;t work at all.</p>
+
+<p>One way to solve this is to have a separate domain name for referencing all of your Go packages. You can then redirect requests to a specific repository (on GitHub or somewhere else). This can be done with a <code>&lt;meta&gt;</code> tag that <code>go get</code> command supports.<sup class="footnote-ref" id="fnref:1"><a href="#fn:1">1</a></sup> Below is example configuration for nginx that will respond to all requests with a <code>&lt;meta&gt;</code> tag that references a repository<sup class="footnote-ref" id="fnref:2"><a href="#fn:2">2</a></sup> on GitHub.</p>
+
+<pre><code class="language-nginx">location ~ ^/([^/]+).*$ {
+	if ($args = &quot;go-get=1&quot;) {
+		add_header Content-Type text/html;
+		return 200 '&lt;meta name=&quot;go-import&quot; content=&quot;$host/$1 git https://github.com/gentlecat/$1.git&quot;&gt;';
+	}
+	return 302 https://github.com/gentlecat/$1;
+}
+</code></pre>
+
+<hr />
+
+<p><em>References:</em></p>
+
+<ul>
+<li><a href="https://golang.org/cmd/go/#hdr-Remote_import_paths" rel="nofollow noreferrer noopener">https://golang.org/cmd/go/#hdr-Remote_import_paths</a></li>
+<li><a href="https://nginx.org/en/docs/" rel="nofollow noreferrer noopener">https://nginx.org/en/docs/</a></li>
+</ul>
+
+<div class="footnotes">
+
+<hr />
+
+<ol>
+<li id="fn:1">See note at <a href="https://golang.org/cmd/go/#hdr-Remote_import_paths" rel="nofollow noreferrer noopener">https://golang.org/cmd/go/#hdr-Remote_import_paths</a> about the import path not being a known code hosting site. <a class="footnote-return" href="#fnref:1"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:2">One of mine in that case. <a class="footnote-return" href="#fnref:2"><span aria-label='Return'>↩︎</span></a></li>
+</ol>
+
+</div>
+</div>
+  
+</div>
+
+  </div>
+
+  <footer>
+    <hr />
+    Articles by <a rel="author" href="https://roman.zone/">Roman Tsukanov</a>,
+    licensed under the <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> license.
+    <strong><a type="application/rss+xml" href="/rss.xml">RSS feed</a></strong>.
+    <br /><em>Opinions expressed here are my own.</em>
+  </footer>
+
+</body>
+
+</html>
