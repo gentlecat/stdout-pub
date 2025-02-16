@@ -1,0 +1,34 @@
+@startuml
+
+cloud "Internet" as inet #aliceblue;line:blue;line.dotted;text:blue {
+    rectangle "Phone" as phone
+    rectangle "Laptop" as laptop
+}
+
+cloud "<b>VPN service\n[Tailscale]" as vpn
+
+vpn -- phone
+vpn -- laptop
+
+rectangle "Home network" as home_net #aliceblue;line:blue;line.dashed;text:blue {
+
+    collections "<b>DNS servers\n[Pi-Hole + DNS over HTTPS proxy]" as dns
+
+    rectangle "<b>Reverse proxy\n[nginx-proxy-manager]" as proxy
+
+    rectangle "Self-hosted services" as services #aliceblue;line:blue;line.dashed;text:blue {
+        rectangle "<b>Photos\n[Immich]"
+        rectangle "<b>File storage\n[Nextcloud]"
+        rectangle "<b>Bookmark manager\n[Linkding]"
+        rectangle "<b>RSS feed aggregator\n[Linkding]"
+        rectangle "<b>Smart home stuff\n[Home Assistant, Homebridge]"
+    }
+
+    services == proxy
+
+}
+
+vpn == dns
+vpn == proxy
+
+@enduml

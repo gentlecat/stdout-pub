@@ -1,0 +1,290 @@
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  
+    <title>Testing Python in Docker containers with Jenkins - /home/roman/stdout</title>
+  
+
+  <link rel="stylesheet" href="/static/styles/main.css" />
+
+  <script src="/static/js/comments.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/comments.css" />
+
+  <script src="/static/js/code-highlight.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/code-highlight.css" />
+
+  <script src="https://peak.roman.zone/js/script.js" data-domain="stdout.roman.zone" defer></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>/home/<a href="https://roman.zone/">roman</a>/<a href="/">stdout</a></h1>
+  </header>
+
+  <div class="content">
+    
+<div id="article-content">
+  <h1 class="title">Testing Python in Docker containers with Jenkins</h1>
+  <div class="date">Oct 24, 2016</div>
+  <div class="text">
+<h2 id="overview">Overview</h2>
+
+<p>As a part of the migration to a new hosting provider at <a href="https://metabrainz.org/" rel="nofollow noreferrer noopener">MetaBrainz</a>, we started <a href="https://www.docker.com/" rel="nofollow noreferrer noopener">dockerizing</a> all of our apps. One of the problems that came up is setting up Jenkins to run Python tests inside containers and getting results from them. Here I&rsquo;m going to describe how we solved this problem. Perhaps it will help you make a similar setup or at least give some ideas.</p>
+
+<p>There are several things to keep in mind:</p>
+
+<ol>
+<li>Python app might depend on additional services like a database or memcache.</li>
+<li>We need to have a way to determine if tests that run inside a container pass or fail. There might be other metrics that we need to get from it.</li>
+<li>All containers created during a test run need to be shut down and removed.</li>
+</ol>
+
+<h2 id="the-process">The process</h2>
+
+<h3 id="making-a-container-for-testing">Making a container for testing</h3>
+
+<p>The first step is to create a Docker container that is going to run Python tests. In the examples I&rsquo;m going to use <a href="https://pytest.org" rel="nofollow noreferrer noopener">pytest</a> framework, but the process should be similar for other ones.</p>
+
+<p>Below is the example of running pytest, which generates tests results in JUnit format and a code coverage report.</p>
+
+<pre><code class="language-dockerfile">FROM python
+
+# Application setup...
+
+COPY . /code/ # Copy source coude with all the tests.
+WORKDIR /code
+CMD py.test --junitxml=/data/test_report.xml \
+            --cov-report xml:/data/coverage.xml
+</code></pre>
+
+<p>If your tests depend on another service like a database to be running, you can use the <a href="https://github.com/jwilder/dockerize" rel="nofollow noreferrer noopener">dockerize</a> utility to wait for that service to start up. In the example below container waits for a service <code>postgresql</code> to start running on port <code>5432</code> with a timeout of 60 seconds (or some other). After that service has started, <code>py.test</code> command runs.</p>
+
+<pre><code class="language-dockerfile">FROM python
+
+ENV DOCKERIZE_VERSION v0.2.0
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz &amp;&amp; \
+    tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+
+# Application setup...
+
+COPY . /code/ # Copy source coude with all the tests.
+WORKDIR /code
+CMD dockerize -wait tcp://postgresql:5432 -timeout 60s \
+    py.test --junitxml=/data/test_report.xml \
+            --cov-report xml:/data/coverage.xml
+</code></pre>
+
+<h3 id="putting-dependencies-together">Putting dependencies together</h3>
+
+<p><a href="https://docs.docker.com/compose/reference/overview/" rel="nofollow noreferrer noopener">Docker Compose</a> can be used to simplify startup and connection of all the services that the application depends on.</p>
+
+<pre><code class="language-yaml">version: &quot;2&quot;
+services:
+
+  postgresql:
+    image: postgres
+
+  app_test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    links:
+      - postgresql
+</code></pre>
+
+<p>Service that will run the tests is called <code>app_test</code> in this example. Dockerfile defined above is stored in <code>Dockerfile.test</code> file and compose file is in <code>docker-compose.test.yml</code>.<sup class="footnote-ref" id="fnref:compose-file"><a href="#fn:compose-file">1</a></sup></p>
+
+<h3 id="running-the-tests">Running the tests</h3>
+
+<p>It&rsquo;s time to create a Jenkins project! The type can be a &ldquo;Freestyle project&rdquo;, that&rsquo;s the one I&rsquo;ve been using. Then add an &ldquo;Execute shell&rdquo; build step.</p>
+
+<p><em>Next I&rsquo;ll go through each part of the shell script that is used to run tests. Complete script is at the end of this article.</em></p>
+
+<pre><code class="language-bash">docker-compose -f docker-compose.test.yml \
+               -p jenkinsbuild \
+               up -d --build --force-recreate
+docker logs -f jenkinsbuild_app_test_1
+</code></pre>
+
+<p>Here&rsquo;s what&rsquo;s going on:</p>
+
+<ol>
+<li>We specify the project name (<code>jenkinsbuild</code>) to be able to reliably reference containers.<sup class="footnote-ref" id="fnref:project-name"><a href="#fn:project-name">2</a></sup> It needs to be unique so that we don&rsquo;t confuse test containers with other ones running on the same host.</li>
+<li><code>up</code> command is run with <code>-d</code> (detached) argument so that we run containers in the background. Otherwise, if there is some other container apart from one that runs the tests and exists afterwards, it will be difficult to know when tests are finished running. For example, PostgreSQL container is not going to exit on its own.</li>
+<li>To know when tests actually finish running we can follow the log output of the container with tests - <code>jenkinsbuild_app_test_1</code>.</li>
+</ol>
+
+<h3 id="getting-the-results-out">Getting the results out</h3>
+
+<p>In case of pytest, test results can be saved in a form of junit-xml style report (<code>--junitxml=/data/test_report.xml</code> part in a <code>py.test</code> call) which can then be copied into current workspace.<sup class="footnote-ref" id="fnref:results-access"><a href="#fn:results-access">3</a></sup> Same can be done with a coverage report.</p>
+
+<pre><code class="language-bash">docker cp jenkins_app_test_1:/data/test_report.xml .
+docker cp jenkins_app_test_1:/data/coverage.xml .
+</code></pre>
+
+<p>Now those can be specified in related build sections.</p>
+
+<p>JUnit report configuration:</p>
+
+<p><img src="/static/img/jenkins-docker-python/junit.png" alt="JUnit report configuration" /></p>
+
+<p>Coverage report configuration:</p>
+
+<p><img src="/static/img/jenkins-docker-python/coverage.png" alt="Coverage report configuration" /></p>
+
+<h3 id="cleanup">Cleanup</h3>
+
+<p>Now we just need to shut down all the containers that were created for a test run:</p>
+
+<pre><code class="language-bash">docker-compose -f $COMPOSE_FILE_LOC \
+               -p $COMPOSE_PROJECT_NAME \
+               down --remove-orphans
+docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
+    | awk '{print $1}' | xargs --no-run-if-empty docker stop
+docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
+    | awk '{print $1}' | xargs --no-run-if-empty docker rm
+</code></pre>
+
+<h2 id="bonus-running-jenkins-in-a-docker-container">Bonus: Running Jenkins in a Docker container 📦</h2>
+
+<p>If you are going all-in Docker, then you might also want to run Jenkins in a container. There is an <a href="https://hub.docker.com/_/jenkins/" rel="nofollow noreferrer noopener">official image</a> which allows an easy setup. Except now, if you are executing Jenkins builds in containers, you&rsquo;ll need a way to manage Docker containers inside another Docker container&hellip;</p>
+
+<p>Jérôme Petazzoni suggests<sup class="footnote-ref" id="fnref:docker-in-docker"><a href="#fn:docker-in-docker">4</a></sup> to mount the Docker socket from a host, which worked well for me. The only thing you need to do is to create your own Dockerfile based on the Jenkins image and install Docker with Compose there.</p>
+
+<pre><code class="language-dockerfile">FROM jenkins:alpine
+
+# Parent container switches to &quot;jenkins&quot; user, so we need to revert that.
+# Don't switch back because Docker will stop working.
+USER root
+
+RUN apk add --no-cache \
+            ca-certificates \
+            curl \
+            openssl \
+            py-pip \
+    &amp;&amp; rm -rf /var/cache/apk/*
+
+# Installing Docker and Compose...
+# See https://hub.docker.com/_/docker/ for updates.
+ENV DOCKER_BUCKET get.docker.com
+ENV DOCKER_VERSION 1.12.3
+ENV DOCKER_SHA256 626601deb41d9706ac98da23f673af6c0d4631c4d194a677a9a1a07d7219fa0f
+RUN set -x \
+    &amp;&amp; curl -fSL &quot;https://${DOCKER_BUCKET}/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz&quot; -o docker.tgz \
+    &amp;&amp; echo &quot;${DOCKER_SHA256} *docker.tgz&quot; | sha256sum -c - \
+    &amp;&amp; tar -xzvf docker.tgz \
+    &amp;&amp; mv docker/* /usr/local/bin/ \
+    &amp;&amp; rmdir docker \
+    &amp;&amp; rm docker.tgz \
+    &amp;&amp; docker -v
+RUN pip install docker-compose
+</code></pre>
+
+<p><em>Installation script is mostly copied from the latest official <code>docker</code> image<sup class="footnote-ref" id="fnref:docker-img"><a href="#fn:docker-img">5</a></sup> at the time of writing. You can check one of the dockerfiles there for updates.</em></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>At the end, we have a Jenkins project that is ready to run tests in a Docker container and save results.</p>
+
+<p>This tutorial assumes that there is only one Jenkins build running at a time on one host. I imagine running multiple builds on the same host will not work as well with the setup that is described here.</p>
+
+<h2 id="appendix-bash-script-for-jenkins">Appendix: Bash script for Jenkins</h2>
+
+<p>This is the complete version of the bash script for the &ldquo;Execute shell&rdquo; build step in Jenkins:</p>
+
+<pre><code class="language-bash">#!/usr/bin/env bash
+
+# Modify these two as needed:
+COMPOSE_FILE_LOC=&quot;docker-compose.test.yml&quot;
+TEST_CONTAINER_NAME=&quot;app_test&quot;
+
+COMPOSE_PROJECT_NAME_ORIGINAL=&quot;jenkinsbuild_${BUILD_TAG}&quot;
+
+# Project name is sanitized by Compose, so we need to do the same thing.
+# See https://github.com/docker/compose/issues/2119.
+COMPOSE_PROJECT_NAME=$(echo $COMPOSE_PROJECT_NAME_ORIGINAL | awk '{print tolower($0)}' | sed 's/[^a-z0-9]*//g')
+TEST_CONTAINER_REF=&quot;${COMPOSE_PROJECT_NAME}_${TEST_CONTAINER_NAME}_1&quot;
+
+# Record installed version of Docker and Compose with each build
+echo &quot;Docker environment:&quot;
+docker --version
+docker-compose --version
+
+function cleanup {
+    # Shutting down all containers associated with this project
+    docker-compose -f $COMPOSE_FILE_LOC \
+                   -p $COMPOSE_PROJECT_NAME \
+                   down --remove-orphans
+    docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
+        | awk '{print $1}' | xargs --no-run-if-empty docker stop
+    docker ps -a --no-trunc  | grep $COMPOSE_PROJECT_NAME \
+        | awk '{print $1}' | xargs --no-run-if-empty docker rm
+}
+
+function run_tests {
+    # Create containers
+    docker-compose -f $COMPOSE_FILE_LOC \
+                   -p $COMPOSE_PROJECT_NAME \
+                   up -d --build --force-recreate
+
+    # List images and containers related to this build
+    docker images | grep $COMPOSE_PROJECT_NAME | awk '{print $0}'
+    docker ps -a | grep $COMPOSE_PROJECT_NAME | awk '{print $0}'
+
+    # Follow the container with tests...
+    docker logs -f $TEST_CONTAINER_REF
+}
+
+function extract_results {
+    docker cp ${TEST_CONTAINER_REF}:/data/test_report.xml .
+    docker cp ${TEST_CONTAINER_REF}:/data/coverage.xml .
+}
+
+set -e
+cleanup            # Initial cleanup
+trap cleanup EXIT  # Cleanup after tests finish running
+
+run_tests
+extract_results
+</code></pre>
+
+<p><img src="/static/img/jenkins-docker-python/superjenkins.svg" width="100" alt="Master Jenkins" /></p>
+
+<div class="footnotes">
+
+<hr />
+
+<ol>
+<li id="fn:compose-file">I added <code>.test</code> part into Dockerfile and Compose file names in order to not confuse them with other Docker-related files that are used for other purposes (development, production, etc.). <a class="footnote-return" href="#fnref:compose-file"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:project-name">Otherwise Compose uses a directory name, which can be hard to determine. <a class="footnote-return" href="#fnref:project-name"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:results-access">Putting results into a volume doesn&rsquo;t work quite well with Jenkins since Docker runs containers as <code>root</code>. There are some tricks to assign another owner, but they seemed way too hacky for my taste. <a class="footnote-return" href="#fnref:results-access"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:docker-in-docker"><a href="https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/" rel="nofollow noreferrer noopener">https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/</a> <a class="footnote-return" href="#fnref:docker-in-docker"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:docker-img">Check links to dockerfiles at <a href="https://hub.docker.com/_/docker/" rel="nofollow noreferrer noopener">https://hub.docker.com/_/docker/</a>. <a class="footnote-return" href="#fnref:docker-img"><span aria-label='Return'>↩︎</span></a></li>
+</ol>
+
+</div>
+</div>
+  
+</div>
+
+  </div>
+
+  <footer>
+    <hr />
+    Articles by <a rel="author" href="https://roman.zone/">Roman Tsukanov</a>,
+    licensed under the <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> license.
+    <strong><a type="application/rss+xml" href="/rss.xml">RSS feed</a></strong>.
+    <br /><em>Opinions expressed here are my own.</em>
+  </footer>
+
+</body>
+
+</html>

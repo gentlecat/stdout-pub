@@ -1,0 +1,137 @@
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  
+    <title>GSoC: Tips and tricks - /home/roman/stdout</title>
+  
+
+  <link rel="stylesheet" href="/static/styles/main.css" />
+
+  <script src="/static/js/comments.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/comments.css" />
+
+  <script src="/static/js/code-highlight.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/code-highlight.css" />
+
+  <script src="https://peak.roman.zone/js/script.js" data-domain="stdout.roman.zone" defer></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>/home/<a href="https://roman.zone/">roman</a>/<a href="/">stdout</a></h1>
+  </header>
+
+  <div class="content">
+    
+<div id="article-content">
+  <h1 class="title">GSoC: Tips and tricks</h1>
+  <div class="date">Feb 27, 2017</div>
+  <div class="text"><p><strong>2024-02-16 update</strong>: There&rsquo;s now a much more comprehensive guide available here: <a href="https://google.github.io/gsocguides/" rel="nofollow noreferrer noopener">https://google.github.io/gsocguides/</a>.</p>
+
+<hr />
+
+<p><img src="/static/img/gsoc/google-campus.jpg" alt="" /></p>
+
+<p><a href="https://summerofcode.withgoogle.com/" rel="nofollow noreferrer noopener">Google Summer of Code</a> (GSoC) is a program for university students all over the world. Not going to go into the details describing what it is. All this info is available on Google&rsquo;s website. Instead, I&rsquo;d like to share some things that I learned over the three years<sup class="footnote-ref" id="fnref:years"><a href="#fn:years">1</a></sup> I participated as a student and one as a mentor. Over the course of these years, I learned some things that might be worth sharing with other students who are interested in applying, organizations and mentors.</p>
+
+<h2 id="students-1">Students</h2>
+
+<ul>
+<li><p><strong>Consider avoiding very popular organizations.</strong></p>
+
+<p>Sure, working for organizations like Mozilla, GitHub, or Wikimedia sounds sexy, but getting accepted there is also significantly more difficult<sup class="footnote-ref" id="fnref:popular-orgs"><a href="#fn:popular-orgs">2</a></sup>. Some of the organizations I worked with get a surprisingly low amount of good quality applications.</p>
+
+<p>When I was a mentor at MetaBrainz we had plenty of slots to fill with students, but no good competition for them. Chances are that if you applied and had a basic knowledge of a project with a decent proposal, we&rsquo;d had no choice but to accept you.</p></li>
+</ul>
+
+<ul>
+<li><p><strong>Contact organizations early.</strong></p>
+
+<p>For organizations, choosing a student can be a difficult task. You can make that task easier for them by getting involved even before the program officially begins for students.</p>
+
+<p>The first impression is important though. Do a bit of research before talking to people on IRC, mailing list, or whichever another medium they use. If you are interested in a specific project, try to set up a development environment and start contributing. An organization will probably have a bug tracker of some kind, where you can find an easy to fix bug to get yourself into the development process.</p>
+
+<p>Don&rsquo;t be afraid to ask questions if you want! Just make sure to try and answer them yourself first<sup class="footnote-ref" id="fnref:good-questions"><a href="#fn:good-questions">3</a></sup>.</p></li>
+</ul>
+
+<ul>
+<li><p><strong>Try to contribute before applying.</strong></p>
+
+<p>Find projects that you are interested in and start getting involved in the development process. Some projects might be difficult to contribute to due to their complexity, but you should at least try.</p>
+
+<p>The bare minimum is setting up your development environment. If you haven&rsquo;t done that before or during your application, then the project might not be for you. It&rsquo;s fine to ask questions if you get stuck and need help. Some projects are not very actively maintained and might have issues in the setup process. Uncovering these issues by going through existing instructions and testing a piece of software on your platform would already be a good contribution to start with.</p></li>
+
+<li><p><strong>Quality of applications is more important than quantity.</strong></p>
+
+<p>GSoC application process is not gambling. You don&rsquo;t get a higher chance of getting in by submitting as many proposals as you can. You get a higher chance by spending time creating a good proposal and being close to an organization that you like.</p>
+
+<p>Make sure that your project is carefully planned. Most of the time it&rsquo;s better to give yourself more time to account for unexpected problems, bug fixing, testing, feedback, and other time-consuming tasks. If it&rsquo;s appropriate and you want to spend some time, it might be a good idea to do some prototyping to accompany your proposal.</p></li>
+</ul>
+
+<h2 id="organizations-1">Organizations</h2>
+
+<ul>
+<li><p><strong>Require regular reports.</strong></p>
+
+<p>I found that it&rsquo;s a good idea to keep your community in the loop in terms of what students are doing. That way students keep themselves in check and you can make sure that their work is still on schedule. And if it&rsquo;s not on schedule, whether there&rsquo;s a good reason for it. They might need additional help with something they are stuck on, or things just take longer than expected (which is normal for most kinds of project that require planning).</p></li>
+
+<li><p><strong>Do your best to make sure that student is not doing throwaway work</strong></p>
+
+<p>While it&rsquo;s nice for the student to participate in the program and get paid for it, it&rsquo;s much more rewarding for people to see their work be useful to others<sup class="footnote-ref" id="fnref:usefulness"><a href="#fn:usefulness">4</a></sup>. Another reason is that for most students GSoC work is a sort of internship, so it&rsquo;s better to spend your time doing something you are proud of, something that will be good for your career.</p>
+
+<p>My very first project got abandoned after I finished working on it. While it was nice to get some practice, it would&rsquo;ve been better if that project got further attention and use. A good way to solve it is to not put ideas that organization isn&rsquo;t interested in.</p></li>
+</ul>
+
+<ul>
+<li><p><strong>Respond to students who are interested in working with you.</strong></p>
+
+<p>This advice might vary depending on the number of applications that organization receives. Based on my experience some organizations don&rsquo;t respond to students&rsquo; questions or respond way too late in the application process so a student doesn&rsquo;t have enough time to produce a good proposal.</p>
+
+<p>I encountered this a couple of times. One time I contacted the organization about an idea I was interested in. That organization responded to my initial questions and said that this idea was still relevant. I proceeded to build a prototype to make my proposal stand out among any other might be submitted. The prototype that I build became a good addition to the proposal and was helpful in conveying my idea. After all that effort I didn&rsquo;t get any response at all from that organization. This was quite disappointing. Proposal creation practice would&rsquo;ve been much nicer if there was any kind of feedback.</p></li>
+</ul>
+
+<hr />
+
+<p><em>Additional reading:</em></p>
+
+<ul>
+<li><a href="https://developers.google.com/open-source/gsoc/resources/manual" rel="nofollow noreferrer noopener">https://developers.google.com/open-source/gsoc/resources/manual</a></li>
+<li><a href="https://github.com/blog/2312-how-to-run-a-google-summer-of-code-project-on-github" rel="nofollow noreferrer noopener">https://github.com/blog/2312-how-to-run-a-google-summer-of-code-project-on-github</a></li>
+</ul>
+
+<div class="footnotes">
+
+<hr />
+
+<ol>
+<li id="fn:years">Google has lowered the number of times you can participate as a student over time. When I was participating there was no such limit. <a class="footnote-return" href="#fnref:years"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:popular-orgs">This is especially relevant if you don&rsquo;t have a lot of experience and/or are new to open source development. <a class="footnote-return" href="#fnref:popular-orgs"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:good-questions">This article has plenty of great suggestions for asking questions on the internet: <a href="http://www.catb.org/~esr/faqs/smart-questions.html" rel="nofollow noreferrer noopener">http://www.catb.org/~esr/faqs/smart-questions.html</a>. <a class="footnote-return" href="#fnref:good-questions"><span aria-label='Return'>↩︎</span></a></li>
+
+<li id="fn:usefulness">This was certainly the case for me. While I like to work on my own projects for fun, it&rsquo;s definitely more satisfying to know that your work is useful to someone. <a class="footnote-return" href="#fnref:usefulness"><span aria-label='Return'>↩︎</span></a></li>
+</ol>
+
+</div>
+</div>
+  
+</div>
+
+  </div>
+
+  <footer>
+    <hr />
+    Articles by <a rel="author" href="https://roman.zone/">Roman Tsukanov</a>,
+    licensed under the <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> license.
+    <strong><a type="application/rss+xml" href="/rss.xml">RSS feed</a></strong>.
+    <br /><em>Opinions expressed here are my own.</em>
+  </footer>
+
+</body>
+
+</html>

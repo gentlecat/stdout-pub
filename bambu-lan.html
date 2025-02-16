@@ -1,0 +1,139 @@
+
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  
+    <title>Making Bambu Lab 3D printers usable offline - /home/roman/stdout</title>
+  
+
+  <link rel="stylesheet" href="/static/styles/main.css" />
+
+  <script src="/static/js/comments.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/comments.css" />
+
+  <script src="/static/js/code-highlight.js" async defer></script>
+  <link rel="stylesheet" href="/static/styles/code-highlight.css" />
+
+  <script src="https://peak.roman.zone/js/script.js" data-domain="stdout.roman.zone" defer></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>/home/<a href="https://roman.zone/">roman</a>/<a href="/">stdout</a></h1>
+  </header>
+
+  <div class="content">
+    
+<div id="article-content">
+  <h1 class="title">Making Bambu Lab 3D printers usable offline</h1>
+  <div class="date">Feb 12, 2025</div>
+  <div class="text"><p>I recently got myself a Bambu Lab A1 Mini 3D printer. It&rsquo;s a nice little machine, especially for people new to 3D printing (like myself). Based on reviews and my own experience so far, it seems like a solid option for beginners that doesn&rsquo;t require dumping a bunch of money upfront on something that might not end up being used all that often.</p>
+
+<p>Unfortunately, it&rsquo;s one of many devices that are internet-connected first. Local usage is <a href="https://github.com/bambulab/BambuStudio/issues/4512" rel="nofollow noreferrer noopener">an afterthought</a>. Given the history of <a href="https://arstechnica.com/gadgets/2023/08/3d-printers-print-break-on-their-own-due-to-cloud-outage/" rel="nofollow noreferrer noopener">all the terrible decisions</a> that the company has made and <a href="https://arstechnica.com/gadgets/2025/01/bambu-lab-pushes-a-control-system-for-3d-printers-and-boy-did-it-not-go-well/" rel="nofollow noreferrer noopener">continues making</a>, I&rsquo;m not particularly interested in letting this thing connect to the internet. Oh, and it has a camera!</p>
+
+<p>Aside from the obvious switch to LAN only mode, I wanted to take this a step further to regain some of the functionality that you end up losing from their official toolchain.</p>
+
+<h2 id="orca-slicer">Orca Slicer</h2>
+
+<p><strong><a href="https://github.com/SoftFever/OrcaSlicer" rel="nofollow noreferrer noopener">Orca Slicer</a></strong> is a fork of the Bambu Studio, with several crucial improvements. For example, one of the nice enhancements that was <a href="https://github.com/SoftFever/OrcaSlicer/pull/8256" rel="nofollow noreferrer noopener">recently introduced</a> fixes a couple of really annoying issues:</p>
+
+<ol>
+<li><p>Bambu Studio simply wouldn&rsquo;t connect to the printer that&rsquo;s in a different VLAN than my computer without <a href="https://github.com/Rdiger-36/StudioBridge" rel="nofollow noreferrer noopener">some</a> <a href="https://github.com/AndreasSchwalb/babulabRelay" rel="nofollow noreferrer noopener">hacky</a> workarounds. I keep all the IoT devices on their own VLAN that&rsquo;s restricted from making connections outside of my network.</p></li>
+
+<li><p>It kept asking for the &ldquo;access code&rdquo; after restarting the slicer. So I had to keep it handy, ready to paste whenever it asks. Why can&rsquo;t it be saved? 🤷</p></li>
+</ol>
+
+<p>Incompetence is staggering, considering how good the hardware is. See this video for an easy-to-understand explanation of why their software is shit:</p>
+
+<iframe width="100%" height="315" src="https://www.youtube-nocookie.com/embed/iA9dVMcRrhg?si=c_N_f-qxsz2_tCvJ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<h2 id="home-assistant">Home Assistant</h2>
+
+<p>Another set of features that you lose are notifications from Bambu Lab&rsquo;s official mobile app, and just the general ability to monitor your printer remotely. Both can be regained with <a href="https://www.home-assistant.io" rel="nofollow noreferrer noopener">Home Assistant</a>. If you are running it already, great! If not, you should consider using it for all your &ldquo;smart home&rdquo; stuff anyway.</p>
+
+<p>The best way to connect HA with the printer is using this integration (available via HACS): <strong><a href="https://github.com/greghesp/ha-bambulab" rel="nofollow noreferrer noopener">https://github.com/greghesp/ha-bambulab</a></strong>. It includes support for a bunch of different entities that give a pretty comprehensive view of the state of your printer and allows controlling pretty much all features, except for initiating new prints.</p>
+
+<p><a href="https://www.wolfwithsword.com/bambulab-home-assistant-dashboard/" rel="nofollow noreferrer noopener">Create a dashboard</a> that&rsquo;s dedicated to 3D printing to monitor and control things remotely. Set up notifications to replace once which you&rsquo;d normally get from the official mobile app (examples below).</p>
+
+<p><strong>Print completion notification:</strong></p>
+
+<pre><code class="language-yaml">alias: 3D print job is done
+triggers:
+  - device_id: &lt;YOUR_DEVICE_ID&gt;
+    domain: bambu_lab
+    type: event_print_finished
+    trigger: device
+conditions: []
+actions:
+  - data:
+      data:
+        push:
+          thread-id: 3d-printer-done-notification-thread
+        entity_id: camera.&lt;YOUR_CAMERA_ENTITY&gt;
+      message: 3D print has finished
+    action: notify.&lt;YOUR_PHONE&gt;
+mode: single
+</code></pre>
+
+<p><strong>Problem detection notification:</strong></p>
+
+<pre><code class="language-yaml">alias: Problem with the 3D printer detected
+triggers:
+  - device_id: &lt;YOUR_DEVICE_ID&gt;
+    domain: bambu_lab
+    type: event_printer_error
+    trigger: device
+  - device_id: &lt;YOUR_DEVICE_ID&gt;
+    domain: bambu_lab
+    type: event_print_failed
+    trigger: device
+  - device_id: &lt;YOUR_DEVICE_ID&gt;
+    domain: bambu_lab
+    type: event_print_error
+    trigger: device
+conditions: []
+actions:
+  - data:
+      data:
+        push:
+          thread-id: 3d-printer-error-notification-thread
+        entity_id: camera.&lt;YOUR_CAMERA_ENTITY&gt;
+      message: There is a problem with the 3D printer
+    action: notify.&lt;YOUR_PHONE&gt;
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 0
+      milliseconds: 0
+mode: single
+</code></pre>
+
+<hr />
+
+<p>Additional resources:</p>
+
+<ul>
+<li><a href="https://wiki.rossmanngroup.com/wiki/Bambu_Lab_Authorization_Control_System" rel="nofollow noreferrer noopener">https://wiki.rossmanngroup.com/wiki/Bambu_Lab_Authorization_Control_System</a></li>
+</ul>
+</div>
+  
+    <div id="bluesky-comments" data-user="roman.lol" data-post="https://bsky.app/profile/roman.lol/post/3lhzxl3spys2b"></div>
+  
+</div>
+
+  </div>
+
+  <footer>
+    <hr />
+    Articles by <a rel="author" href="https://roman.zone/">Roman Tsukanov</a>,
+    licensed under the <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> license.
+    <strong><a type="application/rss+xml" href="/rss.xml">RSS feed</a></strong>.
+    <br /><em>Opinions expressed here are my own.</em>
+  </footer>
+
+</body>
+
+</html>
